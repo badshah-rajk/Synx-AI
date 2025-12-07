@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "synxai"
+version = "1.0.0"
+description = "Cyberpunk-style Gemini AI Chatbot with threads, markdown, code highlighting"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [{name = "Your Name", email = "you@example.com"}]
+keywords = ["ai", "gemini", "chatbot", "flask", "cyberpunk"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "License :: OSI Approved :: MIT License",
+]
+
+dependencies = [
+    "flask",
+    "google-generativeai",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourname/synxai"
+Repository = "https://github.com/yourname/synxai"
+
+[project.scripts]
+synxai = "synxai.__main__:main"
