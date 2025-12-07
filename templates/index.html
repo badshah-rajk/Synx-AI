@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberpunk Chatbot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Orbitron:wght@400;700&family=Roboto+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/night-owl.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            /* ✅ CHANGED: Body font to Roboto Mono for consistency */
+            font-family: 'Roboto Mono', 'Orbitron', monospace;
+            background: linear-gradient(135deg, #0f0f1a, #1a1a2e);
+            color: #d1e8ff;
+            display: flex;
+            height:100vh;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+        .sidebar {
+            width: 260px;
+            background: rgba(21, 21, 33, 0.9);
+            color: #00ffcc;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            border-right: 1px solid rgba(0, 255, 204, 0.3);
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+        }
+        .sidebar h2 {
+            /* ✅ CHANGED: Roboto Mono for header */
+            font-family: 'Roboto Mono', 'Orbitron', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+        }
+        .sidebar-item {
+            /* ✅ CHANGED: Roboto Mono */
+            font-family: 'Roboto Mono', monospace;
+            padding: 0.9rem;
+            border-radius: 0.3rem;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.5);
+            color: #00ffcc;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 255, 204, 0.1);
+        }
+        .sidebar-item:hover, .sidebar-item.active {
+            background: linear-gradient(45deg, #00ffcc, #ff00ff);
+            color: #0f0f1a;
+            text-shadow: none;
+            border-color: rgba(0, 255, 204, 0.5);
+            box-shadow: 0 0 10px #00ffcc, 0 0 20px #ff00ff;
+        }
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(26, 26, 46, 0.8);
+            border-radius: 15px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.2);
+            overflow: hidden;
+        }
+        .messages {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            background: rgba(15, 15, 26, 0.7);
+        }
+        /* ✅ FIXED: ALL MESSAGES NOW ROBOTO MONO! */
+        .message {
+            /* ✅ CHANGED: Primary font = Roboto Mono */
+            font-family: 'Roboto Mono', monospace !important;
+            padding: 1.2rem;
+            border-radius: 0.6rem;
+            line-height: 1.6;
+            max-width: 75%;
+            animation: fadeIn 0.4s ease-in;
+            border: 1px solid rgba(0, 255, 204, 0.1);
+            backdrop-filter: blur(5px);
+            position: relative;
+            margin-left: 55px;
+            margin-right: 55px;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            font-weight: 400; /* Clean weight */
+        }
+        .message.user {
+            background: linear-gradient(135deg, #10a37f, #00ffcc);
+            color: #0f0f1a;
+            align-self: flex-end;
+            box-shadow: 0 0 10px #00ffcc;
+            margin-left: auto;
+            margin-right: 55px;
+            /* ✅ Roboto Mono bold for user */
+            font-weight: 500;
+        }
+        .message.bot {
+            background: rgba(0, 0, 0, 0.6);
+            color: #d1e8ff;
+            align-self: flex-start;
+            margin-left: 55px;
+            margin-right: auto;
+            /* ✅ Roboto Mono regular for bot */
+            font-weight: 400;
+        }
+        /* ✅ AVATARS - CYBERPUNK STYLE! */
+        .message::before {
+            content: '';
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            position: absolute;
+            top: -10px;
+            z-index: 5;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .message.user::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%2300ff88'/%3E%3Cpath d='M30 40 L50 60 L70 40' stroke='%230f0f1a' stroke-width='3' fill='none'/%3E%3Ccircle cx='40' cy='35' r='3' fill='%230f0f1a'/%3E%3Ccircle cx='60' cy='35' r='3' fill='%230f0f1a'/%3E%3C/svg%3E");
+            left: auto;
+            right: -55px;
+        }
+        .message.bot::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23ff00ff'/%3E%3Crect x='35' y='35' width='30' height='10' rx='2' fill='%230f0f1a'/%3E%3Crect x='35' y='50' width='30' height='8' rx='2' fill='%230f0f1a'/%3E%3Crect x='35' y='65' width='30' height='8' rx='2' fill='%230f0f1a'/%3E%3Ccircle cx='80' cy='30' r='4' fill='%230f0f1a'/%3E%3C/svg%3E");
+            left: -55px;
+        }
+        /* ✅ CODE BLOCKS - ALREADY ROBOTO MONO + ENHANCED */
+        .message pre {
+            background: rgba(0, 0, 0, 0.8) !important;
+            padding: 1rem !important;
+            border-radius: 0.6rem !important;
+            overflow-x: auto !important;
+            /* ✅ PERFECT: Roboto Mono 500 weight */
+            font-family: 'Roboto Mono', monospace !important;
+            font-weight: 500 !important;
+            color: #00ffcc !important;
+            border: 1px solid rgba(0, 255, 204, 0.2) !important;
+            position: relative !important;
+            margin: 0.5rem 0 !important;
+            max-height: 300px !important;
+            overflow-y: auto !important;
+            line-height: 1.5 !important;
+        }
+        .message code {
+            /* ✅ INLINE CODE: Roboto Mono */
+            font-family: 'Roboto Mono', monospace !important;
+            font-weight: 600 !important;
+            color: #ff00ff !important;
+        }
+        .copy-btn {
+            /* ✅ CHANGED: Roboto Mono */
+            font-family: 'Roboto Mono', monospace;
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            background: rgba(0, 0, 0, 0.5);
+            color: #00ffcc;
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            border-radius: 0.4rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        .copy-btn:hover {
+            background: linear-gradient(45deg, #00ffcc, #ff00ff);
+            color: #0f0f1a;
+            box-shadow: 0 0 10px #00ffcc, 0 0 20px #ff00ff;
+            transform: scale(1.1);
+        }
+        /* ✅ TYPING - ROBOTO MONO */
+        .typing {
+            display: none;
+            align-self: flex-start;
+            padding: 1.2rem;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 0.6rem;
+            font-style: italic;
+            color: #a0c0ff;
+            border: 1px solid rgba(0, 255, 204, 0.1);
+            position: relative;
+            margin-left: 55px;
+            font-size: 0;
+            /* ✅ Roboto Mono */
+            font-family: 'Roboto Mono', monospace;
+        }
+        .typing::before {
+            content: 'AI';
+            font-size: 1.1rem;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        .typing::after {
+            content: '';
+            animation: typingDots 1.5s steps(3, end) infinite;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc, 0 0 20px #ff00ff;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            display: inline-block;
+        }
+        @keyframes typingDots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+        .suggestions {
+            padding: 1.5rem 2rem;
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            background: rgba(15, 15, 26, 0.7);
+            border-top: 1px solid rgba(0, 255, 204, 0.1);
+        }
+        .suggestion-btn {
+            /* ✅ CHANGED: Roboto Mono */
+            font-family: 'Roboto Mono', monospace;
+            padding: 0.9rem 1.8rem;
+            background: rgba(0, 0, 0, 0.5);
+            color: #00ffcc;
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            border-radius: 0.6rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+        .suggestion-btn:hover {
+            background: linear-gradient(45deg, #00ffcc, #ff00ff);
+            color: #0f0f1a;
+            box-shadow: 0 0 15px #00ffcc, 0 0 30px #ff00ff;
+            transform: translateY(-2px);
+        }
+        .input-area {
+            display: flex;
+            padding: 1.5rem;
+            background: rgba(21, 21, 33, 0.9);
+            border-top: 1px solid rgba(0, 255, 204, 0.2);
+            box-shadow: 0 -5px 15px rgba(0, 255, 204, 0.1);
+        }
+        #message-input {
+            /* ✅ CHANGED: Input = Roboto Mono */
+            font-family: 'Roboto Mono', monospace !important;
+            flex: 1;
+            padding: 0.9rem 1.8rem;
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            border-radius: 0.6rem;
+            outline: none;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.6);
+            color: #d1e8ff;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        #message-input:focus {
+            border-color: #ff00ff;
+            box-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffcc;
+        }
+        #send-btn {
+            /* ✅ CHANGED: Roboto Mono */
+            font-family: 'Roboto Mono', monospace;
+            margin-left: 1rem;
+            padding: 0.9rem 1.8rem;
+            background: linear-gradient(45deg, #00ffcc, #ff00ff);
+            color: #0f0f1a;
+            border: none;
+            border-radius: 0.6rem;
+            cursor: pointer;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px #00ffcc;
+            font-weight: 600;
+        }
+        #send-btn:hover {
+            background: linear-gradient(45deg, #ff00ff, #00ffcc);
+            box-shadow: 0 0 20px #ff00ff, 0 0 30px #00ffcc;
+            transform: scale(1.05);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .chat-container { max-width: 100%; }
+            .message { max-width: 85%; margin-left: 15px !important; margin-right: 15px !important; }
+            .message::before {
+                left: 15px !important;
+                right: auto !important;
+                top: -15px !important;
+                width: 35px;
+                height: 35px;
+            }
+            .message.user::before { right: 15px !important; left: auto !important; }
+            .typing { margin-left: 15px !important; }
+            .suggestion-btn { font-size: 0.9rem; padding: 0.6rem 1.2rem; }
+            .input-area { padding: 1rem; }
+            .copy-btn { top: 0.3rem; right: 0.3rem; padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar" id="sidebar">
+            <h2>Threads</h2>
+            <div class="sidebar-item" id="new-thread">+ New Thread</div>
+        </div>
+        <div class="chat-container">
+            <div class="messages" id="messages"></div>
+            <div class="typing" id="typing"></div>
+            <div class="suggestions" id="suggestions">
+                <button class="suggestion-btn">What's the weather in San Francisco?</button>
+                <button class="suggestion-btn">Explain React hooks like useState and useEffect</button>
+            </div>
+            <div class="input-area">
+                <input type="text" id="message-input" placeholder="Send a message...">
+                <button id="send-btn">Send</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.18/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        // ✅ SUPERCHARGED AUTO-FIT FUNCTION - WORKS PERFECTLY WITH ROBOTO MONO!
+        function fitTextToBox(element, isCodeBlock = false) {
+            if (!element) return;
+            
+            // ✅ SMART CONTENT DETECTION
+            const isLongText = element.textContent.length > 200;
+            const contentHeight = element.scrollHeight;
+            const containerHeight = element.offsetHeight;
+            
+            if (isCodeBlock) {
+                // ✅ CODE BLOCKS: Conservative scaling (0.75-1.0rem)
+                let fontSize = 0.95;
+                element.style.fontSize = fontSize + 'rem';
+                
+                if (contentHeight > containerHeight * 1.2) {
+                    fontSize = Math.max(0.75, fontSize - 0.1);
+                    element.style.fontSize = fontSize + 'rem';
+                }
+                console.log(`💻 Code fit: ${fontSize.toFixed(2)}rem`);
+                return;
+            }
+            
+            // ✅ REGULAR TEXT: Aggressive scaling (0.7-1.2rem)
+            let fontSize = isLongText ? 0.85 : 1.1;
+            element.style.fontSize = fontSize + 'rem';
+            
+            // Measure
+            const originalMaxWidth = element.style.maxWidth;
+            element.style.maxWidth = 'none';
+            
+            let attempts = 0;
+            while ((element.scrollWidth > element.offsetWidth * 1.05 || 
+                    element.scrollHeight > containerHeight * 1.1) && 
+                   fontSize > 0.7 && attempts < 15) {
+                fontSize -= 0.03;
+                element.style.fontSize = fontSize + 'rem';
+                attempts++;
+            }
+            
+            element.style.maxWidth = originalMaxWidth;
+            
+            // Ensure minimum readability
+            if (fontSize < 0.7) fontSize = 0.7;
+            element.style.fontSize = fontSize + 'rem';
+            
+            console.log(`📝 Text fit (${element.textContent.length} chars): ${fontSize.toFixed(2)}rem`);
+        }
+
+        // ✅ ENHANCED COPY FUNCTION
+        function copyToClipboard(text, button) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => showCopied(button)).catch(() => fallbackCopy(text, button));
+            } else {
+                fallbackCopy(text, button);
+            }
+        }
+        function fallbackCopy(text, button) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed'; textArea.style.left = '-999999px'; textArea.style.top = '-999999px';
+            document.body.appendChild(textArea); textArea.focus(); textArea.select();
+            try {
+                document.execCommand('copy') && showCopied(button);
+            } catch (err) {
+                alert('Copy failed! Please select and copy manually.');
+            }
+            document.body.removeChild(textArea);
+        }
+        function showCopied(button) {
+            const originalText = button.textContent;
+            button.textContent = 'Copied!'; button.style.background = 'linear-gradient(45deg, #00ff88, #00cc66)';
+            setTimeout(() => { button.textContent = originalText; button.style.background = ''; }, 2000);
+        }
+        function addCopyButtons() {
+            messagesDiv.querySelectorAll('pre code').forEach(code => {
+                const pre = code.parentElement;
+                if (!pre.querySelector('.copy-btn')) {
+                    const copyBtn = document.createElement('button');
+                    copyBtn.className = 'copy-btn'; copyBtn.textContent = 'Copy';
+                    copyBtn.addEventListener('click', () => copyToClipboard(code.textContent, copyBtn));
+                    pre.appendChild(copyBtn);
+                }
+            });
+        }
+
+        // ✅ SMOOTH SCROLL
+        function scrollToBottom() {
+            messagesDiv.scrollTo({ top: messagesDiv.scrollHeight, behavior: 'smooth' });
+        }
+
+        const messagesDiv = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const typingDiv = document.getElementById('typing');
+        const newThreadBtn = document.getElementById('new-thread');
+        const sidebar = document.getElementById('sidebar');
+        const suggestionsDiv = document.getElementById('suggestions');
+        let currentThreadId = null;
+
+        async function loadThreads() {
+            try {
+                const response = await fetch('/threads');
+                const threads = await response.json();
+                sidebar.querySelectorAll('.thread-item').forEach(item => item.remove());
+                threads.forEach(thread => {
+                    const threadItem = document.createElement('div');
+                    threadItem.className = 'sidebar-item thread-item';
+                    threadItem.textContent = thread.title;
+                    threadItem.dataset.threadId = thread.id;
+                    threadItem.addEventListener('click', () => loadThread(thread.id));
+                    sidebar.appendChild(threadItem);
+                });
+                if (threads.length > 0) loadThread(threads[0].id);
+                else createNewThread();
+            } catch (error) { console.error('Error loading threads:', error); }
+        }
+
+        async function createNewThread() {
+            try {
+                const response = await fetch('/threads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: `New Thread - ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })}` })
+                });
+                const data = await response.json();
+                currentThreadId = data.id;
+                const threadItem = document.createElement('div');
+                threadItem.className = 'sidebar-item thread-item active';
+                threadItem.textContent = data.title;
+                threadItem.dataset.threadId = data.id;
+                threadItem.addEventListener('click', () => loadThread(data.id));
+                sidebar.insertBefore(threadItem, newThreadBtn.nextSibling);
+                messagesDiv.innerHTML = '';
+                const initialMsg = document.createElement('div');
+                initialMsg.className = 'message bot';
+                initialMsg.textContent = 'Hello there! How can I help you today?';
+                messagesDiv.appendChild(initialMsg);
+                setTimeout(() => fitTextToBox(initialMsg), 100);
+                scrollToBottom();
+                suggestionsDiv.style.display = 'flex';
+            } catch (error) { console.error('Error creating new thread:', error); }
+        }
+
+        async function loadThread(threadId) {
+            try {
+                currentThreadId = threadId;
+                sidebar.querySelectorAll('.thread-item').forEach(item => {
+                    item.classList.toggle('active', parseInt(item.dataset.threadId) === threadId);
+                });
+                const response = await fetch(`/messages/${threadId}`);
+                const messages = await response.json();
+                messagesDiv.innerHTML = '';
+                messages.forEach(msg => {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = `message ${msg.role}`;
+                    msgDiv.innerHTML = marked.parse(msg.content);
+                    messagesDiv.appendChild(msgDiv);
+                });
+                // ✅ FIXED: PERFECT AUTO-FIT FOR ALL!
+                setTimeout(() => {
+                    // Fit text messages
+                    messagesDiv.querySelectorAll('.message:not(:has(pre))').forEach(el => fitTextToBox(el));
+                    // Fit code blocks separately
+                    messagesDiv.querySelectorAll('pre').forEach(el => fitTextToBox(el, true));
+                }, 150);
+                scrollToBottom();
+                suggestionsDiv.style.display = messages.length === 0 ? 'flex' : 'none';
+                hljs.highlightAll();
+                addCopyButtons();
+            } catch (error) { console.error('Error loading thread:', error); }
+        }
+
+        async function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) return;
+            if (!currentThreadId) await createNewThread();
+
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.textContent = text;
+            messagesDiv.appendChild(userMsg);
+            messageInput.value = '';
+            setTimeout(() => fitTextToBox(userMsg), 50);
+            scrollToBottom();
+            suggestionsDiv.style.display = 'none';
+            typingDiv.style.display = 'block';
+
+            try {
+                const response = await fetch(`/chat/${currentThreadId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await response.json();
+                typingDiv.style.display = 'none';
+
+                const botMsg = document.createElement('div');
+                botMsg.className = 'message bot';
+                botMsg.innerHTML = marked.parse(data.response || data.error || 'An error occurred.');
+                messagesDiv.appendChild(botMsg);
+                
+                // ✅ FIXED: PERFECT SEQUENTIAL FITTING
+                setTimeout(() => {
+                    fitTextToBox(botMsg);
+                    botMsg.querySelectorAll('pre').forEach(pre => setTimeout(() => fitTextToBox(pre, true), 50));
+                }, 100);
+
+                scrollToBottom();
+                hljs.highlightAll();
+                addCopyButtons();
+            } catch (error) {
+                typingDiv.style.display = 'none';
+                const botMsg = document.createElement('div');
+                botMsg.className = 'message bot';
+                botMsg.textContent = 'Error: Could not connect to the server.';
+                messagesDiv.appendChild(botMsg);
+                setTimeout(() => fitTextToBox(botMsg), 100);
+                scrollToBottom();
+            }
+        }
+
+        newThreadBtn.addEventListener('click', createNewThread);
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        document.querySelectorAll('.suggestion-btn').forEach(btn => {
+            btn.addEventListener('click', () => { messageInput.value = btn.textContent; sendMessage(); });
+        });
+
+        hljs.highlightAll();
+        loadThreads();
+    </script>
+</body>
+</html>
